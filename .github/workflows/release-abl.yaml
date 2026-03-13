@@ -28,16 +28,15 @@ jobs:
           cd LinuxLoader
           ./make_abl.sh all
 
+      - name: Create ABL tarball
+        run: |
+          tar -czf rocknix-abl-${{ github.ref_name }}.tar.gz \
+            --transform 's|.*/|rocknix-abl-${{ github.ref_name }}/|' \
+            LinuxLoader/Output/abl_signed-*.elf \
+            LinuxLoader/Output/abl_signed-*.elf.sha256
+
       - name: Release
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
-          files: |
-            LinuxLoader/Output/abl_signed-SM6115.elf
-            LinuxLoader/Output/abl_signed-SM8250.elf
-            LinuxLoader/Output/abl_signed-SM8550.elf
-            LinuxLoader/Output/abl_signed-SM8650.elf
-            LinuxLoader/Output/abl_signed-SM6115.elf.sha256
-            LinuxLoader/Output/abl_signed-SM8250.elf.sha256
-            LinuxLoader/Output/abl_signed-SM8550.elf.sha256
-            LinuxLoader/Output/abl_signed-SM8650.elf.sha256
+          files: rocknix-abl-${{ github.ref_name }}.tar.gz
