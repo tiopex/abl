@@ -1,0 +1,41 @@
+name: Release ROCKNIX ABL
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  Build-release-ABL:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout LinuxLoader
+        uses: actions/checkout@v6
+        with:
+          repository: ROCKNIX/LinuxLoader
+          ssh-key: ${{ secrets.LINUXLOADER_DEPLOY_KEY }}
+          submodules: recursive
+          path: LinuxLoader
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential crossbuild-essential-arm64 libc6-dev uuid-dev llvm clang lld
+
+      - name: Build
+        run: |
+          cd LinuxLoader
+          ./make_abl.sh all
+
+      - name: Create ABL tarball
+        run: |
+          tar -czf rocknix-abl-${{ github.ref_name }}.tar.gz \
+            --transform 's|.*/|rocknix-abl-${{ github.ref_name }}/|' \
+            LinuxLoader/Output/abl_signed-*.elf \
+            LinuxLoader/Output/abl_signed-*.elf.sha256
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: rocknix-abl-${{ github.ref_name }}.tar.gz
